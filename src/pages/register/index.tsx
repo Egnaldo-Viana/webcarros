@@ -1,11 +1,14 @@
+import React from 'react';
 import { Container } from '../../components/container';
 import logoImg from '../../assets/logo.svg';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 
 import { Input } from '../../components/input';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+
+import supabase from '../../services/superbaseClient';
 
 const schema = z.object({
   name: z.string().nonempty('O campo nome é obrigatório'),
@@ -22,6 +25,8 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export function Register() {
+  const navigate = useNavigate();
+
   const {
     register,
     handleSubmit,
@@ -31,9 +36,35 @@ export function Register() {
     mode: 'onChange',
   });
 
-  function onSubmit(data: FormData) {
-    console.log(data);
+  async function onSubmit(data: FormData) {
+    const { name, email, password } = data;
+
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          name,
+        },
+      },
+    });
+
+    if (error) {
+      console.log(error.message);
+      return;
+    }
+
+    console.log('Cadastro realizado com sucesso');
+    navigate('/dashboard');
   }
+
+  React.useEffect(() => {
+    async function handleLogout() {
+      await supabase.auth.signOut();
+    }
+
+    handleLogout();
+  }, []);
 
   return (
     <div>
@@ -79,7 +110,7 @@ export function Register() {
               type="submit"
               className="bg-zinc-900 w-full rounded-md text-white font-medium h-10"
             >
-              Acessar
+              Cadastrar
             </button>
           </form>
           <Link to="/login"> Já possui uma conta? Faça o login!</Link>
