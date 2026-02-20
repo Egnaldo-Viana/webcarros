@@ -3,6 +3,8 @@ import { Container } from '../../components/container';
 import logoImg from '../../assets/logo.svg';
 import { Link, useNavigate } from 'react-router';
 
+import { AuthContext } from '../../contexts/AuthContext';
+
 import { Input } from '../../components/input';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -25,6 +27,8 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export function Register() {
+  const { handleInfoUser } = React.useContext(AuthContext);
+
   const navigate = useNavigate();
 
   const {
@@ -36,10 +40,10 @@ export function Register() {
     mode: 'onChange',
   });
 
-  async function onSubmit(data: FormData) {
-    const { name, email, password } = data;
+  async function onSubmit(dataForm: FormData) {
+    const { name, email, password } = dataForm;
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -52,6 +56,14 @@ export function Register() {
     if (error) {
       console.log(error.message);
       return;
+    }
+
+    if (data.user) {
+      handleInfoUser({
+        name: data.user.user_metadata.name,
+        email: data.user.email!,
+        uid: data.user.id,
+      });
     }
 
     console.log('Cadastro realizado com sucesso');
