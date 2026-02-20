@@ -106,6 +106,7 @@ export function Register() {
                 register={register}
               />
             </div>
+
             <button
               type="submit"
               className="bg-zinc-900 w-full rounded-md text-white font-medium h-10"
