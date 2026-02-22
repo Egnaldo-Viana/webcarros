@@ -1,3 +1,4 @@
+import React from 'react';
 import { Container } from '../../../components/container';
 import { DashboardHeader } from '../../../components/panelheader';
 import { FiUpload } from 'react-icons/fi';
@@ -5,6 +6,9 @@ import { useForm } from 'react-hook-form';
 import { Input } from '../../../components/input';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { AuthContext } from '../../../contexts/AuthContext';
+import { v4 as uuidV4 } from 'uuid';
+import supabase from '../../../services/superbaseClient';
 
 const schema = z.object({
   name: z.string().nonempty('O campo nome é obrigatório'),
@@ -25,6 +29,7 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export function New() {
+  const { user } = React.useContext(AuthContext);
   const {
     register,
     handleSubmit,
@@ -34,6 +39,43 @@ export function New() {
 
   function onSubmit(data: FormData) {
     console.log(data);
+  }
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    if (e.target.files && e.target.files[0]) {
+      const image = e.target.files[0];
+
+      if (image.type === 'image/jpeg' || image.type === 'imagem/png') {
+        await handleUpload(image);
+      } else {
+        alert('Envie uma imagem jpeg ou png !!!');
+        return;
+      }
+    }
+  }
+
+  async function handleUpload(image: File) {
+    if (!user?.uid) return;
+
+    const currentUid = user.uid;
+    const uidImage = uuidV4();
+
+    const filePath = `images/${currentUid}/${uidImage}`;
+
+    const { error } = await supabase.storage
+      .from('car')
+      .upload(filePath, image);
+
+    if (error) {
+      console.log('Erro no upload:', error.message);
+      return;
+    }
+
+    const { data } = supabase.storage.from('car').getPublicUrl(filePath);
+
+    const publicUrl = data.publicUrl;
+
+    return publicUrl;
   }
 
   return (
@@ -49,10 +91,12 @@ export function New() {
               type="file"
               accept="image/*"
               className="opacity-0 cursor-pointer "
+              onChange={handleFile}
             />
           </div>
         </button>
       </div>
+
       <div className="w-full bg-white p-3 rounded-lg flex flex-col sm:flex-row items-center gap-2 mt-2">
         <form className="w-full" onSubmit={handleSubmit(onSubmit)}>
           <div className="mb-3">
@@ -103,7 +147,7 @@ export function New() {
 
           <div className="flex w-full mb-3 flex-row items-center gap-4">
             <div className="w-full">
-              <p className="mb-2 font-medium">Telefone/ Whatsapp</p>
+              <p className="mb-2 font-medium">Telefone / Whatsapp</p>
               <Input
                 type="text"
                 register={register}
