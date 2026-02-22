@@ -1,7 +1,7 @@
 import React from 'react';
 import { Container } from '../../../components/container';
 import { DashboardHeader } from '../../../components/panelheader';
-import { FiUpload } from 'react-icons/fi';
+import { FiUpload, FiTrash } from 'react-icons/fi';
 import { useForm } from 'react-hook-form';
 import { Input } from '../../../components/input';
 import { z } from 'zod';
@@ -28,14 +28,24 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
+interface ImageProps {
+  uid: string;
+  name: string;
+  previewUrl: string;
+  url: string;
+  path: string;
+}
+
 export function New() {
   const { user } = React.useContext(AuthContext);
   const {
     register,
     handleSubmit,
     formState: { errors },
-    reset,
+    //reset,
   } = useForm<FormData>({ resolver: zodResolver(schema), mode: 'onChange' });
+
+  const [carImages, setCarImages] = React.useState<ImageProps[]>([]);
 
   function onSubmit(data: FormData) {
     console.log(data);
@@ -45,7 +55,7 @@ export function New() {
     if (e.target.files && e.target.files[0]) {
       const image = e.target.files[0];
 
-      if (image.type === 'image/jpeg' || image.type === 'imagem/png') {
+      if (image.type === 'image/jpeg' || image.type === 'image/png') {
         await handleUpload(image);
       } else {
         alert('Envie uma imagem jpeg ou png !!!');
@@ -75,7 +85,29 @@ export function New() {
 
     const publicUrl = data.publicUrl;
 
+    const imageItem = {
+      name: uidImage,
+      uid: currentUid,
+      previewUrl: URL.createObjectURL(image),
+      url: publicUrl,
+      path: filePath,
+    };
+
+    setCarImages((images) => [...images, imageItem]);
+
     return publicUrl;
+  }
+
+  async function handleDeleteImage(item: ImageProps) {
+    const { error } = await supabase.storage.from('car').remove([item.path]);
+
+    if (error) {
+      console.log('Erro ao deletar:', error.message);
+      return;
+    }
+    setCarImages((images) =>
+      images.filter((image) => image.path !== item.path),
+    );
   }
 
   return (
@@ -95,6 +127,25 @@ export function New() {
             />
           </div>
         </button>
+
+        {carImages.map((item) => (
+          <div
+            key={item.name}
+            className="w-full h-32 flex items-center justify-center relative"
+          >
+            <button
+              className="absolute"
+              onClick={() => handleDeleteImage(item)}
+            >
+              <FiTrash size={28} color="#fff" />
+            </button>
+            <img
+              src={item.previewUrl}
+              className="rounded-lg w-full h-32 object-cover "
+              alt="foto do carro"
+            />
+          </div>
+        ))}
       </div>
 
       <div className="w-full bg-white p-3 rounded-lg flex flex-col sm:flex-row items-center gap-2 mt-2">
