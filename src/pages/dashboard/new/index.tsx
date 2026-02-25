@@ -10,6 +10,8 @@ import { AuthContext } from '../../../contexts/AuthContext';
 import { v4 as uuidV4 } from 'uuid';
 import supabase from '../../../services/superbaseClient';
 
+//  Validação do formulário com Zod
+// Define as regras que cada campo deve seguir
 const schema = z.object({
   name: z.string().nonempty('O campo nome é obrigatório'),
   model: z.string().nonempty('O modelo é obrigatório'),
@@ -26,6 +28,7 @@ const schema = z.object({
   description: z.string().nonempty('A descrição é obrigatória'),
 });
 
+// Tipo automático baseado no schema
 type FormData = z.infer<typeof schema>;
 
 interface ImageProps {
@@ -37,20 +40,63 @@ interface ImageProps {
 }
 
 export function New() {
+  //  aqui vejo se o usuário ta logado
   const { user } = React.useContext(AuthContext);
+
+  // Configuração do React Hook Form com Zod
   const {
     register,
     handleSubmit,
     formState: { errors },
-    //reset,
+    reset,
   } = useForm<FormData>({ resolver: zodResolver(schema), mode: 'onChange' });
 
   const [carImages, setCarImages] = React.useState<ImageProps[]>([]);
 
-  function onSubmit(data: FormData) {
-    console.log(data);
+  // função de cadastro
+  async function onSubmit(data: FormData) {
+    if (carImages.length === 0) {
+      alert('Envie alguma imagem do carro');
+      return;
+    }
+
+    const carListImages = carImages.map((car) => {
+      return {
+        uid: car.uid,
+        name: car.name,
+        url: car.url,
+      };
+    });
+
+    // Aqui estou inserindo os dados na tabela "carros" no banco
+    const { data: carData, error } = await supabase
+      .from('carros')
+      .insert([
+        {
+          name: data.name,
+          model: data.model,
+          year: data.year,
+          km: data.km,
+          price: data.price,
+          city: data.city,
+          whatsapp: data.whatsapp,
+          description: data.description,
+          images: carListImages,
+        },
+      ])
+      .select()
+      .single();
+    if (error) {
+      console.error('Erro ao cadastrar carro:', error);
+      alert('Erro ao cadastrar carro');
+      return;
+    }
+    reset();
+    setCarImages([]);
+    console.log('Carro cadastrado com sucesso:', carData);
   }
 
+  // aqui faço a captura do input de imagens
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     if (e.target.files && e.target.files[0]) {
       const image = e.target.files[0];
@@ -64,6 +110,7 @@ export function New() {
     }
   }
 
+  // função de upload para o storage
   async function handleUpload(image: File) {
     if (!user?.uid) return;
 
