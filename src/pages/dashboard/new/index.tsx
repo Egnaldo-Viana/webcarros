@@ -55,6 +55,10 @@ export function New() {
 
   // função de cadastro
   async function onSubmit(data: FormData) {
+    if (!user) {
+      alert('Você precisa estar logado');
+      return;
+    }
     if (carImages.length === 0) {
       alert('Envie alguma imagem do carro');
       return;
@@ -73,6 +77,7 @@ export function New() {
       .from('carros')
       .insert([
         {
+          user_id: user.uid,
           name: data.name,
           model: data.model,
           year: data.year,
