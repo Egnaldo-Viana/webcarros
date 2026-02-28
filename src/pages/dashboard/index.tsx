@@ -25,6 +25,7 @@ interface ImageCarProps {
 
 export function Dashboard() {
   const [cars, setCars] = React.useState<CarsProps[]>([]);
+  const [loadImages, setLoadImages] = React.useState<string[]>([]);
 
   const { user } = React.useContext(AuthContext);
 
@@ -48,15 +49,33 @@ export function Dashboard() {
     loadCars();
   }, [user]);
 
-  async function handleDeleteCar(id: string) {
-    const { error } = await supabase.from('carros').delete().eq('id', id);
+  async function handleDeleteCar(car: CarsProps) {
+    const imagePaths = car.images.map((image) => {
+      return `images/${image.uid}/${image.name}`;
+    });
+
+    const { error: storageError } = await supabase.storage
+      .from('car')
+      .remove(imagePaths);
+
+    if (storageError) {
+      console.error('Erro ao deletar imagens:', storageError);
+      return;
+    }
+
+    const { error } = await supabase.from('carros').delete().eq('id', car.id);
     console.log(error);
 
     if (error) {
       console.error('Erro ao deletar carro: ', error);
       return;
     }
-    setCars((cars) => cars.filter((car) => car.id !== id));
+
+    setCars((prev) => prev.filter((item) => item.id !== car.id));
+  }
+
+  function handleImageLoad(id: string) {
+    setLoadImages((prevImageLoaded) => [...prevImageLoaded, id]);
   }
 
   return (
@@ -66,15 +85,25 @@ export function Dashboard() {
         {cars.map((car) => (
           <section key={car.id} className="w-full bg-white rounded-lg relative">
             <button
-              onClick={() => handleDeleteCar(car.id)}
+              onClick={() => handleDeleteCar(car)}
               className="absolute bg-white w-14 h-14 rounded-full flex items-center justify-center right-2 top-2"
             >
               <FiTrash2 size={26} color="#000" />
             </button>
+            <div
+              className="w-full h-72 rounded-lg bg-slate-200 "
+              style={{
+                display: loadImages.includes(car.id) ? 'none' : 'block',
+              }}
+            ></div>
             <img
               className="w-full rounded-lg mb-2 "
               src={car.images?.[0]?.url}
               alt="carro"
+              onLoad={() => handleImageLoad(car.id)}
+              style={{
+                display: loadImages.includes(car.id) ? 'block' : 'none',
+              }}
             />
             <p className="font-bold mt-1 px-2 mb-2">{car.name}</p>
 
