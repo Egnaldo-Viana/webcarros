@@ -1,7 +1,7 @@
 import React from 'react';
 import { Container } from '../../components/container';
 import { FaWhatsapp } from 'react-icons/fa';
-import { useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import supabase from '../../services/superbaseClient';
 import { Swiper, SwiperSlide } from 'swiper/react';
 
@@ -31,6 +31,7 @@ export function CarDetail() {
   const { id } = useParams();
   const [car, setCar] = React.useState<CarProps>();
   const [slidePerView, setSlidePerView] = React.useState<number>(2);
+  const navigate = useNavigate();
 
   React.useEffect(() => {
     async function loadCars() {
@@ -44,10 +45,11 @@ export function CarDetail() {
         .eq('id', id)
         .single();
 
-      if (error) {
-        console.error('Erro ao buscar carro:', error);
+      if (error || !data) {
+        navigate('/');
         return;
       }
+
       setCar(data);
     }
 
@@ -72,7 +74,7 @@ export function CarDetail() {
 
   return (
     <Container>
-      <div>
+      {car && (
         <Swiper
           slidesPerView={slidePerView}
           pagination={{ clickable: true }}
@@ -88,50 +90,54 @@ export function CarDetail() {
             </SwiperSlide>
           ))}
         </Swiper>
-        {car && (
-          <main className="w-full bg-white rounded-lg p-6 my-4">
-            <div className="flex flex-col sm:flex-row mb-4 items-center justify-between">
-              <h1 className="font-bold text-3xl text-black">{car?.name}</h1>
-              <h1 className="font-bold text-3xl text-black">
-                {Number(car?.price).toLocaleString('pt-BR', {
-                  style: 'currency',
-                  currency: 'BRL',
-                })}
-              </h1>
-            </div>
-            <p>{car?.model}</p>
-            <div className="flex w-full gap-6 my-4">
-              <div className="flex flex-col gap-4">
-                <div>
-                  <p>Cidade</p>
-                  <strong>{car?.city}</strong>
-                </div>
-                <div>
-                  <p>Ano</p>
-                  <strong>{car?.year}</strong>
-                </div>
+      )}
+      {car && (
+        <main className="w-full bg-white rounded-lg p-6 my-4">
+          <div className="flex flex-col sm:flex-row mb-4 items-center justify-between">
+            <h1 className="font-bold text-3xl text-black">{car?.name}</h1>
+            <h1 className="font-bold text-3xl text-black">
+              {Number(car?.price).toLocaleString('pt-BR', {
+                style: 'currency',
+                currency: 'BRL',
+              })}
+            </h1>
+          </div>
+          <p>{car?.model}</p>
+          <div className="flex w-full gap-6 my-4">
+            <div className="flex flex-col gap-4">
+              <div>
+                <p>Cidade</p>
+                <strong>{car?.city}</strong>
               </div>
-
-              <div className="flex flex-col gap-4">
-                <div>
-                  <p>KM</p>
-                  <strong>{car?.km}</strong>
-                </div>
+              <div>
+                <p>Ano</p>
+                <strong>{car?.year}</strong>
               </div>
             </div>
 
-            <strong>Descrição:</strong>
-            <p className="mb-4">{car?.description}</p>
+            <div className="flex flex-col gap-4">
+              <div>
+                <p>KM</p>
+                <strong>{car?.km}</strong>
+              </div>
+            </div>
+          </div>
 
-            <strong>Telefone / WhatsApp </strong>
-            <p>{car?.whatsapp}</p>
+          <strong>Descrição:</strong>
+          <p className="mb-4">{car?.description}</p>
 
-            <a className="bg-green-500 w-full text-white flex items-center justify-center gap-2 my-6 h-11 text-xl rounded-lg font-medium cursor-pointer ">
-              Conversar com o vendedor <FaWhatsapp size={26} color="#fff" />
-            </a>
-          </main>
-        )}
-      </div>
+          <strong>Telefone / WhatsApp </strong>
+          <p>{car?.whatsapp}</p>
+
+          <a
+            href={`https://api.whatsapp.com/send?phone=${car?.whatsapp}&text=Olá vi esse ${car?.name} no site e fiquei interessado `}
+            target="_blank"
+            className="bg-green-500 w-full text-white flex items-center justify-center gap-2 my-6 h-11 text-xl rounded-lg font-medium cursor-pointer "
+          >
+            Conversar com o vendedor <FaWhatsapp size={26} color="#fff" />
+          </a>
+        </main>
+      )}
     </Container>
   );
 }
