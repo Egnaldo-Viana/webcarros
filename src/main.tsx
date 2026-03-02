@@ -6,6 +6,8 @@ import { router } from './App.tsx';
 import { RouterProvider } from 'react-router';
 import AuthProvider from './contexts/AuthContext.tsx';
 
+import { register } from 'swiper/element/bundle';
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider>

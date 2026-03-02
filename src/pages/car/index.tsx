@@ -3,6 +3,7 @@ import { Container } from '../../components/container';
 import { FaWhatsapp } from 'react-icons/fa';
 import { useParams } from 'react-router';
 import supabase from '../../services/superbaseClient';
+import { Swiper, SwiperSlide } from 'swiper/react';
 
 interface CarProps {
   id: string;
@@ -29,6 +30,7 @@ interface ImagesCarProps {
 export function CarDetail() {
   const { id } = useParams();
   const [car, setCar] = React.useState<CarProps>();
+  const [slidePerView, setSlidePerView] = React.useState<number>(2);
 
   React.useEffect(() => {
     async function loadCars() {
@@ -52,10 +54,40 @@ export function CarDetail() {
     loadCars();
   }, [id]);
 
+  React.useEffect(() => {
+    function handleResize() {
+      if (window.innerWidth < 720) {
+        setSlidePerView(1);
+      } else {
+        setSlidePerView(2);
+      }
+    }
+    handleResize();
+
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
   return (
     <Container>
       <div>
-        <h1>Slider</h1>
+        <Swiper
+          slidesPerView={slidePerView}
+          pagination={{ clickable: true }}
+          navigation
+        >
+          {car?.images.map((image) => (
+            <SwiperSlide key={image.name}>
+              <img
+                src={image.url}
+                alt="imagem do carro"
+                className="w-full h-96 object-cover"
+              />
+            </SwiperSlide>
+          ))}
+        </Swiper>
         {car && (
           <main className="w-full bg-white rounded-lg p-6 my-4">
             <div className="flex flex-col sm:flex-row mb-4 items-center justify-between">
