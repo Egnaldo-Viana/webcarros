@@ -23,36 +23,63 @@ interface CarImageProps {
 export function Home() {
   const [cars, setCars] = React.useState<CarsProps[]>([]);
   const [loadImages, setLoadImages] = React.useState<string[]>([]);
+  const [input, setInput] = React.useState('');
 
   React.useEffect(() => {
-    async function loadCars() {
-      const { data, error } = await supabase
-        .from('carros')
-        .select('*')
-        .order('price', { ascending: false });
-
-      if (error) {
-        console.error('Erro ao buscar carros:', error);
-        return;
-      }
-
-      setCars(data || []);
-    }
     loadCars();
   }, []);
+  async function loadCars() {
+    const { data, error } = await supabase
+      .from('carros')
+      .select('*')
+      .order('price', { ascending: false });
+
+    if (error) {
+      console.error('Erro ao buscar carros:', error);
+      return;
+    }
+
+    setCars(data || []);
+  }
 
   function handleImageLoad(id: string) {
     setLoadImages((prevImageLoaded) => [...prevImageLoaded, id]);
   }
 
+  async function handleSearchCar() {
+    if (input === '') {
+      loadCars();
+      return;
+    }
+
+    setCars([]);
+    setLoadImages([]);
+
+    const { data, error } = await supabase
+      .from('carros')
+      .select('*')
+      .ilike('name', `%${input}%`);
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    setCars(data);
+  }
   return (
     <Container>
       <section className="bg-white p-4 rounded-lg w-full max-w-3xl mx-auto flex justify-center items-center gap-2">
         <input
           className="w-full border-2 rounded-lg h-9 px-3 outline-none"
           placeholder="Digite o nome do carro..."
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
         />
-        <button className="bg-red-500 h-9 px-8 rounded-lg text-white font-medium text-lg">
+        <button
+          className="bg-red-500 h-9 px-8 rounded-lg text-white font-medium text-lg"
+          onClick={handleSearchCar}
+        >
           Buscar
         </button>
       </section>

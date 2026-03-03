@@ -8,6 +8,8 @@ import AuthProvider from './contexts/AuthContext.tsx';
 
 import { register } from 'swiper/element/bundle';
 
+register();
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider>
