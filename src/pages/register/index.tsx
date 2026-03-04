@@ -11,6 +11,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import supabase from '../../services/superbaseClient';
+import toast from 'react-hot-toast';
 
 const schema = z.object({
   name: z.string().nonempty('O campo nome é obrigatório'),
@@ -67,6 +68,7 @@ export function Register() {
     }
 
     console.log('Cadastro realizado com sucesso');
+    toast.success('Bem vindo ao webcarros');
     navigate('/dashboard');
   }
 

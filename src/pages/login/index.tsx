@@ -10,6 +10,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 
 import supabase from '../../services/superbaseClient';
 
+import toast from 'react-hot-toast';
+
 const schema = z.object({
   email: z
     .string()
@@ -42,10 +44,12 @@ export function Login() {
 
     if (error) {
       console.log('Erro ao fazer login:', error.message);
+      toast.error('Erro ao fazer login');
       return;
     }
 
     console.log('Login realizado com sucesso');
+    toast.success('Logado com sucesso.');
     navigate('/dashboard');
   }
 

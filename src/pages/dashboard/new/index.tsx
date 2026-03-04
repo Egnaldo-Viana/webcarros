@@ -9,6 +9,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { AuthContext } from '../../../contexts/AuthContext';
 import { v4 as uuidV4 } from 'uuid';
 import supabase from '../../../services/superbaseClient';
+import toast from 'react-hot-toast';
 
 //  Validação do formulário com Zod
 // Define as regras que cada campo deve seguir
@@ -56,11 +57,11 @@ export function New() {
   // função de cadastro
   async function onSubmit(data: FormData) {
     if (!user) {
-      alert('Você precisa estar logado');
+      toast.error('Você precisa está logado');
       return;
     }
     if (carImages.length === 0) {
-      alert('Envie alguma imagem do carro');
+      toast.error('Envie pelo menos uma imagem!!!');
       return;
     }
 
@@ -93,12 +94,13 @@ export function New() {
       .single();
     if (error) {
       console.error('Erro ao cadastrar carro:', error);
-      alert('Erro ao cadastrar carro');
+      toast.error('Erro ao cadastrar carro');
       return;
     }
     reset();
     setCarImages([]);
     console.log('Carro cadastrado com sucesso:', carData);
+    toast.success('Carro cadastrado com sucesso!!!');
   }
 
   // aqui faço a captura do input de imagens
